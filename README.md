@@ -4,6 +4,8 @@
 
 This Python project simulates a 4-DOF RRPP (Revolute-Revolute-Prismatic-Prismatic) robotic manipulator performing pick-and-place tasks with movable boxes. The simulator visualizes the robot, its end-effector trajectory, and interactive boxes on a shelf with multiple slabs. 
 
+![4DOF Robot](4DOF_Robot.png)
+
 **Features:**
 
 -   **4-DOF RRPP Kinematics:** Implements Forward Kinematics (FK) and a fast, constrained Inverse Kinematics (IK) solver (analytic θ<sub>1</sub>, scalar search for θ<sub>2</sub>). 
@@ -216,3 +218,4 @@ Full Project source code: <https://github.com/Erum330/Erum330-Robot_Manipulation
 **Presentation Link**
 
 Youtube Link: <https://youtu.be/8QtGPwK8Q3w> 
+
