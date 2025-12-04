@@ -1,16 +1,3 @@
-"""
-rrpp_simulation_with_moving_boxes.py
-
-4-DOF RRPP manipulator simulator with moving pickable boxes.
-Features:
- - Blue boxes move as the robot picks and places them
- - FK + fast IK (theta1 analytic, theta2 scalar search), joint-space trajectories
- - Thicker link visuals, preset camera view
- - Boxes start on the floor and follow end-effector when picked
- - Fading dotted trajectory of the end-effector
- - Boxes snap on top of shelf slabs
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
