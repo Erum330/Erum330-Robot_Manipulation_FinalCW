@@ -1,215 +1,237 @@
-**4-DOF RRPP Manipulator Simulator with Moving Boxes**
+4-DOF RRPR Manipulator - Pick and Place Simulation
+--------------------------------------------------
 
-**Overview**
+Overview
+-------
 
-This Python project simulates a 4-DOF RRPP (Revolute-Revolute-Prismatic-Prismatic) robotic manipulator performing pick-and-place tasks with movable boxes. The simulator visualizes the robot, its end-effector trajectory, and interactive boxes on a shelf with multiple slabs. 
+This Python project simulates a 4-DOF RRPR (Revolute-Revolute-Prismatic-Revolute) robotic manipulator performing pick-and-place tasks with movable boxes. The simulator animates the robot, computes Forward Kinematics/Inverse Kinematics, shows end-effector trajectories, and displays interactive blue boxes being picked from the floor and placed on multi-slab shelves.
 
 ![4DOF Robot](4DOF_Robot.png)
 
 **Features:**
 
--   **4-DOF RRPP Kinematics:** Implements Forward Kinematics (FK) and a fast, constrained Inverse Kinematics (IK) solver (analytic θ<sub>1</sub>, scalar search for θ<sub>2</sub>). 
+-   **4-DOF RRPR Kinematics:** Implements Forward Kinematics (FK) and a fast, constrained Inverse Kinematics (IK) solver (analytic **θ<sub>1</sub>** (yaw), **θ<sub>2</sub>** (pitch),  **d<sub>3</sub>** (telescopic prismatic extension),  **θ<sub>4</sub>** (wrist rotational alignment)). 
 
 -   **Pick and Place Task Simulation:** The robot executes a sequence of pick-and-place tasks, moving boxes from the floor to specified shelf locations. 
 
 -   **Dynamic Objects:** Simulated blue boxes are linked to the end-effector when **"grasped"** and snap accurately onto the shelf slabs when **"released"**. 
 
--   **Trajectory Visualization:** Displays the end-effector (EE) position and a fading, dotted trajectory line. 
+-   **Trajectory Visualization:** Displays the end-effector (EE) position and a fading trajectory line. 
 
--   **Scene Components:** Includes a floor grid, a shelf structure, and a moving status label. 
+-   **Scene Components:** Includes a floor grid, a shelf structure, and a moving status label.
 
-**Robot Kinematics and DH Parameters**
+Robot Configuration
+-------------------
 
-The robot is a 4-DOF RRPP manipulator, meaning: 
+### Physical Parameters
 
--   **Joint 1 -- Revolute (Yaw):** The robot rotates horizontally around the vertical z-axis. 
+python
 
--   **Joint 2 -- Revolute (Pitch):** The arm swings up/down in a vertical plane. 
+```
+L1 = 0.55 m        # Base vertical offset
+L2 = 0.50 m        # Shoulder link length
+TOOL_LEN = 0.12 m  # End-effector/tool length
+BOX_SIZE = 0.07 m  # Box dimensions
+```
 
--   **Joint 3 -- Prismatic (Linear Extension):** The arm extends forward/backward. 
+### Joint Limits
 
--   **Joint 4 -- Prismatic (Wrist Extension):** The last link extends to reach precise depths. 
+| Joint | Type | Range | Description |
+| --- | --- | --- | --- |
+| θ₁ | Revolute | -π to π | Base rotation (azimuth) |
+| θ₂ | Revolute | -π/2 to π/2 | Shoulder elevation |
+| d₃ | Prismatic | -0.25 to 0.80 m | Linear extension |
+| θ₄ | Revolute | -π to π | Tool pitch |
 
-This combination is designed for planar reaching, shelf insertion, and pick-and-place tasks. 
+Installation
+------------
 
-**DH Parameters Table**
+### Requirements
 
-The Denavit-Hartenberg (DH) convention is used to model the links and joints. The FK formulation in the code corresponds to the parameters below, where L1 is the base height, L2 is the shoulder link length, and d<sub>3</sub> and d<sub>4</sub> are the prismatic joint variables. 
+bash
 
-| Axis(i) | Type |  aᵢ  | αᵢ (deg) |   dᵢ   | θᵢ (deg) | Joint Variable        |
-|---------|------|------|----------|--------|-----------|------------------------|
-|    1    |  R   |  0   |   -90    |  L₁    |   θ₁     | θ₁ (Yaw)              |
-|    2    |  R   |  0   |    90    |   0    |   θ₂     | θ₂ (Pitch)            |
-|    3    |  P   |  L₂  |    0     |  d₃    |    0     | d₃ (Extension)        |
-|    4    |  P   |  0   |    0     |  d₄    |    0     | d₄ (Extension)        |
+```
+pip install numpy matplotlib
+```
 
-Where: 
--   L₁ -- base height 
+### Dependencies
 
--   L₂ -- shoulder link length 
+-   Python 3.7+
+-   NumPy
+-   Matplotlib (with 3D support)
 
--   d₃ -- horizontal sliding extension 
+Usage
+-----
 
--   d₄ -- vertical extension 
+### Run the Simulation
 
-These parameters are used to compute the transformation matrices and final end-effector pose. 
+bash
 
-**Major Components**
+```
+python main.py
+```
 
-① **Base Frame and Joint 1 (Yaw Rotation)**
+DH Parameter Table
+------------------
 
--   The robot is mounted on the floor, with the z-axis upward. 
+| **Joint** | **α_(i-1)** (Link Twist) | **a_(i-1)** (Link Length) | **d_i** (Link Offset) | **θ_i** (Joint Angle) |
+| --- | --- | --- | --- | --- |
+| **1** | 0° | 0 | **L1** | **θ₁** |
+| **2** | -90° | 0 | 0 | **θ₂** |
+| **3** | 0° | **L2** | **d₃** | 0 |
+| **4** | 0° | 0 | 0 | **θ₄** |
 
--   Joint 1 rotates the entire upper arm left/right. 
+### DH Parameters:
 
--   This rotation determines the horizontal direction of the end-effector. 
+-   **Joint 1 (Base Rotation)**: Rotation about the `z-axis` with a vertical offset `L1`.
 
-② **Shoulder Link (L2) and Joint 2 (Pitch)**
+-   **Joint 2 (Shoulder Elevation)**: Rotates around an axis perpendicular to the `z-axis` with an offset `L2`.
 
--   Joint 2 rotates in a vertical plane. 
+-   **Joint 3 (Prismatic Extension)**: The prismatic joint, which extends along the `z-axis` with displacement `d3`.
 
--   It lifts or lowers the arm relative to the ground. 
+-   **Joint 4 (Tool Pitch)**: Rotates the tool to control its orientation with respect to the previous link.
 
--   Combined with Joint 1, it defines the robot's 3D workspace cone. 
+The DH transformations are used to calculate the end-effector position at each step.
 
-③ **Prismatic Joint 3 --- Main Linear Extension (d3)**
+### Coordinate Frames
 
--   This joint extends the arm outward horizontally. 
+-   Frame 0: Base frame at ground level
+-   Frame 1: After base rotation at height L1
+-   Frame 2: After shoulder elevation
+-   Frame 3: Wrist position after prismatic extension
+-   Frame 4: Tool tip (end-effector)
 
--   It behaves like a telescoping beam. 
+ * * * * * 
+Algorithm Breakdown
+-------------------
 
--   Used to reach deeper into the shelf while maintaining a stable posture. 
+### Step 1: **Compute Wrist Position**
 
-④ **Prismatic Joint 4 --- Wrist Extension (d4)** 
+`wrist_z = z_tip + TOOL_LEN`
 
--   Provides the fine positioning needed to:\
-    ✓ insert a box precisely\
-    ✓ pull back smoothly\
-    ✓ avoid collisions with shelves 
+-   Assumes the tool points straight down (vertical, `-z` direction).
 
-⑤ **End-Effector (EE) and Gripper Proxy**
+-   Back-calculates the **wrist position (P3)** by subtracting the **tool length** from the tool tip's `z` coordinate (`z_tip`).
 
--   Shown as a small cube (the robot does not simulate fingers). 
+### Step 2: **Solve for θ₂ (Shoulder Elevation)**
 
--   During "grasp", a box becomes linked to the EE coordinates. 
+`s = (wrist_z - L1) / L2
+theta2 = asin(s)`
 
--   During "release", the box "unparents" and snaps onto shelf surface. 
+-  From the geometry, the **vertical reach** is given by:
 
-**Forward Kinematics (FK)**
+$$
+z_{\text{wrist}} = L1 + L2 \cdot \sin(\theta_2)
+$$
 
-FK computes the position and orientation of the end-effector from given joint values. 
+- Rearranging for \(\theta_2\):
 
-How FK is applied: 
+$$
+\theta_2 = \arcsin\left(\frac{z_{\text{wrist}} - L1}{L2}\right)
+$$
 
-1.  Rotate around z-axis by θ<sub>1</sub> 
+- The value is clipped between `-1` and `1` to ensure valid values for `sin(θ2)`.
 
-2.  Tilt upward/downward by θ<sub>2</sub> 
+### Step 3: **Solve for d₃ (Prismatic Extension)**
 
-3.  Translate along the axis by d<sub>3</sub> 
+`r = hypot(x, y)  # radial distance from z-axis
 
-4.  Translate again along the same axis by d<sub>4</sub> 
+-   The total radial reach is the sum of the arm's reach (`L2 * cos(θ2)`) and the prismatic displacement `d3`.
 
-Together, FK builds the full chain: 
+$$
+d_3 = r - L2 \cdot \cos(\theta_2)
+$$
+-   The value of `d3` is then clipped within the limits of the prismatic joint, i.e., between `D3_MIN` and `D3_MAX`.
 
-T = T1(θ<sub>1</sub>) * T2(θ<sub>2</sub>) * T3(d<sub>3</sub>) * T4(d<sub>4</sub>) 
+### Step 4: **Solve for θ₁ (Base Rotation)**
 
-This determines: 
+`theta1 = atan2(y, x)`
 
--   Where the arm is 
+-   The `x` and `y` coordinates of the end-effector give the direction for `θ1`.
 
--   Where the EE is 
+-   `arctan2` computes the angle between the `x` and `y` coordinates, ensuring the correct quadrant.
 
--   Where the box will be if grasped 
+-   The value of `θ1` is clipped to the range `[THETA1_MIN, THETA1_MAX]`.
 
-**Inverse Kinematics (IK)**
+### Step 5: **Solve for θ₄ (Tool Pitch)**
 
-IK is used when the robot knows the desired EE position and must compute joint values: 
+`theta4 = -pi/2 - theta2`
 
-1.  Compute θ<sub>1</sub> from target X,Y (horizontal direction). 
+-   This enforces the combined angle `elev = θ2 + θ4 = -π/2`, ensuring that the tool remains **perpendicular** to the horizontal plane (straight down).
 
-1.  Compute θ<sub>2</sub> using a constrained-search method for stability. 
+### Step 6: **Verification**
 
-1.  Compute d<sub>3</sub> so the arm extends to correct radial distance. 
+`P4, _ = fk_full(joint)
+if np.linalg.norm(P4 - np.array([x, y, z_tip])) > IK_TOL:
+    raise ValueError(f"IK residual too large: {np.linalg.norm(P4 - np.array([x, y, z_tip]))}")`
 
-1.  Compute d<sub>4</sub> to set the precise depth needed for shelf insertion. 
+-   After computing the joint configurations (`θ1`, `θ2`, `d3`, `θ4`), we verify that the calculated end-effector position (`P4`) matches the target position (`tool_tip`) within a specified tolerance (`IK_TOL`).
 
-This makes the robot reliable for shelf tasks. 
+* * * * *
 
-**Box Movement and Attachment Logic**
+Geometric Interpretation
+------------------------
 
-**Grasp Phase**
+The robot operates similarly to a **vertical SCARA** variant with the following behavior:
 
--   A boolean flag links the box to the EE. 
+1.  **θ₁**: Rotates the base to orient toward the target.
 
--   Box position = FK(EE). 
+2.  **θ₂**: Controls the **vertical height** by elevating the shoulder.
 
-**Move Phase**
+3.  **d₃**: The prismatic joint extends or retracts to adjust the **radial distance** from the base to the target.
 
--   The box follows the EE trajectory exactly. 
+4.  **θ₄**: The tool pitch adjusts to keep the **end effector** oriented correctly, ensuring it points straight down relative to the rest of the arm.
 
--   Dotted line shows the EE path. 
+The robot operates in **cylindrical coordinates**, with **radial** and **vertical** positioning controlled by `θ1` and `θ2`, respectively, and **reach** being extended by `d3`.
 
-**Release Phase**
+* * * * *
 
-1.  Compute correct slab surface height: 
+Animation
+---------
 
-z = slab_base + box_height/2 
+The animation visualizes the robot's movements through a series of **pick-and-place tasks**:
 
-1.  Snap the box onto the slab. 
+1.  **Pick**: The robot moves from the home position to the object's current position on the floor.
 
-1.  Break the parent link. 
+2.  **Place**: The robot then moves from the pick position to one of the shelf positions and places the object there.
 
-**End-Effector Trajectory (Dotted Curve)**
+3.  The animation smoothly transitions through the robot's movements using **forward kinematics** and **inverse kinematics** for each task.
 
-The dotted trajectory line shows: 
+### Animation Details:
 
--   Smooth cubic interpolation in joint space 
+-   **Floor Grid**: A grid representing the floor area where objects are placed.
 
--   EE path generated through numeric FK evaluation 
+-   **Shelf**: A 3D rectangular shelf with multiple levels where objects are placed.
 
--   Fading effect: older points lighter, new ones darker 
+-   **Boxes**: Boxes are picked up and placed by the robot on the shelves.
 
-It helps visualize: 
+-   **End-Effector**: The robot's end-effector moves along the trajectory defined by the joint configurations.
 
--   Motion planning 
+Future Enhancements
+-------------------
 
--   Shelf insertion 
+-   **Inverse Kinematics Solver**: Extend the inverse kinematics solver to handle more complex manipulations or ambiguous solutions (e.g., elbow-up vs elbow-down).
 
--   Return path to pick another box 
+-   **Path Planning**: Implement path planning algorithms for optimized movements.
 
-**Whole System Working**
+-   **Collision Avoidance**: Add obstacle detection and avoidance in the robot's workspace.
 
-The flow of the simulation: 
+-   **Force Control**: Implement force sensors and feedback to ensure secure grasping and placing of objects.
 
-1.  Load shelf 
+Conclusion
+----------
 
-2.  Generate pick points on floor 
+This simulation effectively demonstrates the movement and task completion of a **4-DOF robotic manipulator** using forward and inverse kinematics. The **DH parameterization** provides a solid foundation for modeling and controlling the robot's movement. The **3D animation** offers a dynamic and intuitive way to visualize the robot's actions in a simulated environment.
 
-3.  Generate place points on slab centers 
+The simulation accounts for:
 
-For each task: 
+-   Joint movements and constraints.
 
-1.  IK → reach floor 
+-   Grasping and releasing objects using inverse kinematics.
 
-2.  Attach box 
+-   Displaying continuous motion and robot trajectory.
 
-3.  IK → move to slab 
-
-4.  Release 
-
-5.  Return home 
-
-6.  Animate FK frames and trajectory 
-
-**Prerequisites**
-
-To run this simulation, you need Python and the following libraries: 
-
--   numpy 
-
--   matplotlib 
-
--   Scipy 
+This project provides a foundation for understanding and simulating robotic manipulator movements using kinematics, suitable for further development and real-world applications in robotics and automation.
 
 **GitHub Repository**
 
@@ -218,4 +240,5 @@ Full Project source code: <https://github.com/Erum330/Erum330-Robot_Manipulation
 **Presentation Link**
 
 Youtube Link: <https://youtu.be/8QtGPwK8Q3w> 
+
 
